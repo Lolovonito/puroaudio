@@ -36,6 +36,9 @@ import androidx.compose.material.icons.rounded.RepeatOne
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.material.icons.rounded.VolumeDown
+import androidx.compose.material.icons.rounded.VolumeMute
+import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -82,6 +85,7 @@ import com.puroaudio.player.ui.theme.PuroBackground
 import com.puroaudio.player.ui.theme.PuroSurfaceHigh
 import com.puroaudio.player.ui.theme.PuroTextDim
 import kotlin.math.max
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -105,6 +109,7 @@ fun NowPlayingScreen(
     onToggleShuffle: () -> Unit,
     onCycleRepeat: () -> Unit,
     onQueueSong: (Int) -> Unit,
+    onVolumeChange: (Float) -> Unit,
 ) {
     val song = playerState.currentSong
     if (song == null) {
@@ -127,10 +132,16 @@ fun NowPlayingScreen(
     var showMenu by remember { mutableStateOf(false) }
     var dragging by remember { mutableStateOf(false) }
     var dragValue by remember { mutableFloatStateOf(0f) }
+    var volumeSliderValue by remember { mutableFloatStateOf(playerState.volume) }
+    var isVolumeDragging by remember { mutableStateOf(false) }
     val duration = max(1L, playerState.durationMs)
 
     LaunchedEffect(playerState.positionMs) {
         if (!dragging) dragValue = playerState.positionMs.toFloat()
+    }
+
+    LaunchedEffect(playerState.volume) {
+        if (!isVolumeDragging) volumeSliderValue = playerState.volume
     }
 
     val artworkModel = if (artworkState.songId == song.id && artworkState.file != null) {
@@ -352,6 +363,53 @@ fun NowPlayingScreen(
                     },
                 )
             }
+        }
+
+        // Control de volumen
+        val currentVol = if (isVolumeDragging) volumeSliderValue else playerState.volume
+        val volumePercent = (currentVol * 100f).roundToInt().coerceIn(0, 100)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp, vertical = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = when {
+                    currentVol <= 0.001f -> Icons.Rounded.VolumeMute
+                    currentVol < 0.5f -> Icons.Rounded.VolumeDown
+                    else -> Icons.Rounded.VolumeUp
+                },
+                contentDescription = "Volumen",
+                tint = PuroTextDim,
+                modifier = Modifier.size(24.dp),
+            )
+            Spacer(Modifier.width(8.dp))
+            Slider(
+                value = currentVol.coerceIn(0f, 1f),
+                onValueChange = {
+                    isVolumeDragging = true
+                    volumeSliderValue = it
+                    onVolumeChange(it)
+                },
+                onValueChangeFinished = {
+                    isVolumeDragging = false
+                    onVolumeChange(volumeSliderValue)
+                },
+                valueRange = 0f..1f,
+                colors = SliderDefaults.colors(
+                    thumbColor = PuroAmber,
+                    activeTrackColor = PuroAmber,
+                    inactiveTrackColor = PuroSurfaceHigh,
+                ),
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = "Volumen: $volumePercent%",
+                style = MaterialTheme.typography.bodySmall,
+                color = PuroTextDim,
+            )
         }
 
         Row(

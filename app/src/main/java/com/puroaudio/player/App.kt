@@ -85,10 +85,11 @@ private val tabItems = listOf(
 )
 
 @Composable
-fun PuroApp() {
+fun PuroApp(
+    playerVm: PlayerViewModel = viewModel(),
+    libraryVm: LibraryViewModel = viewModel(),
+) {
     val context = LocalContext.current
-    val libraryVm: LibraryViewModel = viewModel()
-    val playerVm: PlayerViewModel = viewModel()
     val navController = rememberNavController()
 
     val library by libraryVm.library.collectAsState()
@@ -316,6 +317,7 @@ fun PuroApp() {
                     onToggleShuffle = playerVm::toggleShuffle,
                     onCycleRepeat = playerVm::cycleRepeatMode,
                     onQueueSong = playerVm::playQueueIndex,
+                    onVolumeChange = playerVm::setVolume,
                 )
             }
             composable(

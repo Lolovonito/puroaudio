@@ -100,7 +100,9 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             }
             controller = connected
             connected.addListener(listener)
-            _state.update { it.copy(connected = true, error = null) }
+            val initialVol = AppSettings.volume.value
+            connected.volume = initialVol
+            _state.update { it.copy(connected = true, error = null, volume = initialVol) }
             sync(connected)
             startTicker()
         }, ContextCompat.getMainExecutor(context))
@@ -134,6 +136,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                 shuffle = player.shuffleModeEnabled,
                 repeatMode = player.repeatMode,
                 playbackState = player.playbackState,
+                volume = player.volume,
             )
         }
     }
@@ -243,6 +246,21 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             }
             player.play()
         }
+    }
+
+    fun setVolume(volume: Float) {
+        val clamped = volume.coerceIn(0f, 1f)
+        controller?.volume = clamped
+        AppSettings.setVolume(clamped)
+        _state.update { it.copy(volume = clamped) }
+    }
+
+    fun skipToNext() {
+        controller?.seekToNextMediaItem()
+    }
+
+    fun skipToPrevious() {
+        controller?.seekToPreviousMediaItem()
     }
 
     fun next() {

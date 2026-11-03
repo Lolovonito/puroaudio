@@ -7,3 +7,7 @@ build/
 captures/
 .externalNativeBuild/
 .cxx/
+# APKs en la raíz (se distribuyen como Releases en GitHub)
+*.apk
+# Copia de seguridad del motor original (no es código fuente activo)
+app/src/main/java/com/puroaudio/player/playback/BitPerfectEngine_original.kt
